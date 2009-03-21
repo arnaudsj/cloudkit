@@ -88,7 +88,7 @@ module CloudKit
     # Conditions are added using #add_condition.
     def run(table)
       table.keys.inject([]) do |result, key|
-        if @conditions.all? { |condition| table[key][condition[0]] == condition[2] }
+        if @conditions.all? { |condition| table[key][condition[0]].send(map_operator(condition[1]), condition[2]) }
           result << table[key].merge(:pk => key)
         else
           result
@@ -101,5 +101,19 @@ module CloudKit
     def add_condition(key, operator, value)
       @conditions << [key, operator, value]
     end
+
+    protected
+
+    def map_operator(operator)
+      case operator
+      when :eql; :==
+      when :lt; :<
+      when :gt; :>
+      when :lte; :<=
+      when :gte; :>=
+      else; raise CloudKit::InvalidQueryException
+      end
+    end
+
   end
 end
